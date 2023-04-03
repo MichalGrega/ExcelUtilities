@@ -1,12 +1,21 @@
 Function CtoLng(ByVal Value As Variant) As Long
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Function accepts a Value and tries to convert it to Long type
+' regardless of the decimal separator used.
+' Solves the problem of two possible decimal separators "." and ",".
+' First "." is used. If error is raised, "." is replaced with "," and
+' the conversion is attempted once more. If the conversion fails, an error is raised.
+
     On Error Resume Next
     CtoLng = CLng(Value)
     If Err.number <> 0 Then
         Err.Clear
         CtoLng = CLng(Replace(Value, ".", ","))
-        If Err.number <> 0 Then Err.Raise vbObjectError + 100, , "fCtoLng: wrong value."
+        If Err.number <> 0 Then Err.Raise vbObjectError + 100, , "fCtoLng: wrong value with error " & Err.number & ": " & Err.Description
     End If
+    
 End Function
+
 Function convert(ByVal InputArray As Variant, ByVal number As Long, Optional ByVal reversed As Boolean = False) As Variant
     Dim bounds() As Variant
     numDims = NumberOfArrayDimensions(InputArray)
