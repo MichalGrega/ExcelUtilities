@@ -133,8 +133,8 @@ Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
     ''''''''''''''''''''''''''''''''''''
     solved = False
     For i = stt(0) To stt(1) Step stt(2)
+        bottom = LBound(bounds, 2)
         If Not solved Then
-            bottom = LBound(bounds, 2)
             result(i) = bounds(i, bottom) + (number Mod (bounds(i, bottom + 1) - bounds(i, bottom) + 1))
             number = WorksheetFunction.Quotient(number, bounds(i, bottom + 1) - bounds(i, bottom) + 1)
         Else
@@ -153,4 +153,3 @@ WrongDimensions:
     Exit Function
 End Function
 '_________________________________________________________________________________________________________________________________________________________________
-
