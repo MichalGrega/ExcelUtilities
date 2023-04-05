@@ -218,7 +218,13 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
     Const primitives As String = "String, Long, Integer, Boolean, Single, Double, Byte, Currency, Decimal, Date, Error"
     Const itemSeparator As String = ", "
     Const indentation As Variant = "  "
+    Const MaxItems As Long = 200 'if number items in collection or dictionary exceeds this limit, show only number
+    Dim objects As New Collection
     output = ""
+    
+    With objects
+        .Add Array("FirstIndex", "Length", "Value"), "IMAtch2"
+    End With
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     ' 1. Primitive value
@@ -486,9 +492,9 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ' to the current key.
             ''''''''''''''''''''''''''''''
             If IsObject(Variable(currentKey)) Then
-                Set currentValue = Variable(currentKey)
+                Set CurrentValue = Variable(currentKey)
             Else
-                currentValue = Variable(currentKey)
+                CurrentValue = Variable(currentKey)
             End If
             
             ''''''''''''''''''''''''''''''''''''''''''''
@@ -502,13 +508,13 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ' Recursively call the DUMP function for the value with
             ' an increased indentation level
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
-            currentValue = DUMP(currentValue, Deepness + 1, LineBreaks, ShowArrayIndexes)
+            CurrentValue = DUMP(CurrentValue, Deepness + 1, LineBreaks, ShowArrayIndexes)
             
             ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
             ' Add key: value pair string to the output string and add an
             ' item separator.
             ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-            output = output & showKy & ": " & currentValue & itemSeparator
+            output = output & showKy & ": " & CurrentValue & itemSeparator
             
             '''''''''''''''''''''''''''''
             ' Add a line break if enabled
@@ -535,42 +541,84 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
     ' 4. Collections
     ' Check if the Variable is a collection
     ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    ElseIf "Collection" Like "*" & TypeName(Variable) & "*" Then
-        '''''''''''''''''''''''''''
-        ' Open a collection bracket
-        '''''''''''''''''''''''''''
-        output = "["
+    ElseIf "Collection, IMatchCollection2" Like "*" & TypeName(Variable) & "*" Then
         
-        ''''''''''''''''''''''''''''''''''
-        ' If line breaks are enabled
-        ' add a line break and indentation
-        ''''''''''''''''''''''''''''''''''
-        If LineBreaks Then
-            Deepness = Deepness + 1
-            output = output & vbNewLine & WorksheetFunction.Rept(indentation, Deepness)
+        If Variable.Count <= MaxItems Then
+            '''''''''''''''''''''''''''
+            ' Open a collection bracket
+            '''''''''''''''''''''''''''
+            output = "["
+            
+            ''''''''''''''''''''''''''''''''''
+            ' If line breaks are enabled
+            ' add a line break and indentation
+            ''''''''''''''''''''''''''''''''''
+            If LineBreaks Then
+                Deepness = Deepness + 1
+                output = output & vbNewLine & WorksheetFunction.Rept(indentation, Deepness)
+            End If
+            
+            '''''''''''''''''''''''''''''''''''''''''''''
+            ' Recursively call DUMP on each item in the
+            ' collection and add a line break if enabled.
+            '''''''''''''''''''''''''''''''''''''''''''''
+            For Each itm In Variable
+                output = output & DUMP(itm, Deepness, LineBreaks, ShowArrayIndexes) & itemSeparator
+                If LineBreaks Then output = output & vbNewLine & WorksheetFunction.Rept(indentation, Deepness)
+            Next itm
+            
+            '''''''''''''''''''''''''''''''
+            ' Close the collection bracket.
+            '''''''''''''''''''''''''''''''
+            output = Left(output, Len(output) - 2) & "]"
+        Else
+            If TypeName(Variable) <> "Collection" Then output = TypeName(Variable)
+            output = output & "[" & Variable.Count & " items]"
         End If
-        
-        '''''''''''''''''''''''''''''''''''''''''''''
-        ' Recursively call DUMP on each item in the
-        ' collection and add a line break if enabled.
-        '''''''''''''''''''''''''''''''''''''''''''''
-        For Each itm In Variable
-            output = output & DUMP(itm, Deepness, LineBreaks, ShowArrayIndexes) & itemSeparator
-            If LineBreaks Then output = output & vbNewLine & WorksheetFunction.Rept(indentation, Deepness)
-        Next itm
-        
-        '''''''''''''''''''''''''''''''
-        ' Close the collection bracket.
-        '''''''''''''''''''''''''''''''
-        output = Left(output, Len(output) - 2) & "]"
     
     ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     ' 5. Other values
     ' If not any of the previous types, return type name.
     ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Else
-        output = TypeName(Variable)
+        Set objectMemberNames = Nothing
+        On Error Resume Next
+        objectMemberNames = objects(TypeName(Variable))
+        On Error GoTo 0
+        If IsArray(objectMemberNames) Then
+            output = TypeName(Variable) & "("
+            For Each memberName In objectMemberNames
+                CurrentValue = CallByName(Variable, memberName, VbGet)
+                If TypeName(CurrentValue) = "String" Then CurrentValue = """" & CurrentValue & """"
+                output = output & memberName & ": " & CurrentValue & ", "
+            Next memberName
+            output = Left(output, Len(output) - 2) & ")"
+        Else
+            output = TypeName(Variable)
+        End If
     End If
     DUMP = output
 End Function
 '_________________________________________________________________________________________________________________________________________________________________
+
+
+Public Function NumberOfArrayDimensions(arr As Variant) As Integer
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' NumberOfArrayDimensions
+' This function returns the number of dimensions of an array. An unallocated dynamic array
+' has 0 dimensions. This condition can also be tested with IsArrayEmpty.
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Dim Ndx As Integer
+Dim res As Integer
+On Error Resume Next
+' Loop, increasing the dimension index Ndx, until an error occurs.
+' An error will occur when Ndx exceeds the number of dimension
+' in the array. Return Ndx - 1.
+Do
+    Ndx = Ndx + 1
+    res = UBound(arr, Ndx)
+Loop Until Err.number <> 0
+
+NumberOfArrayDimensions = Ndx - 1
+
+End Function
