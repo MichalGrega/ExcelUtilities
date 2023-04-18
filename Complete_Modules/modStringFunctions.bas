@@ -1,4 +1,3 @@
-Attribute VB_Name = "modStringFunctions"
 Option Explicit
 Option Compare Text
 
@@ -470,10 +469,38 @@ End Function
 '_________________________________________________________________________________________________________________________________________________________________
 
 Function Conv(ByVal Number As Long, ParamArray DimensionSettings() As Variant) As Variant
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Wrapper function for Conversion function. Makes use of parameter array so the
+' input of settings is easier.
+'
+' Parameters:
+'     * Number as Long - number to be converted
+'     * DimensionSettings - gattering array for dimension settings. Every dimension
+'                           is a separate argument or you can use two dimensional
+'                           array.
+'
+' Dependancies:
+'     * Conversion
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     Conv = Conversion(DimensionSettings, Number, False)
 End Function
 
 Function ConvRev(ByVal Number As Long, ParamArray DimensionSettings() As Variant) As Variant
+    
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Wrapper function for Conversion function but in a reversed order. Makes use of
+' parameter array so the input of settings is easier.
+'
+' Parameters:
+'     * Number as Long - number to be converted
+'     * DimensionSettings - gattering array for dimension settings. Every dimension
+'                           is a separate argument or you can use two dimensional
+'                           array.
+'
+' Dependancies:
+'     * Conversion
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     ConvRev = Conversion(DimensionSettings, Number, True)
 End Function
 
