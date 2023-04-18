@@ -233,7 +233,7 @@ Function SEPAR(ByVal CommaSeparatedText As String, _
                 '''''''''''''''''''''''''''''''''''''''''''''''''''
                 On Error Resume Next
                 processedParsedText = Application.Run(FunctionEvaluateStatement, parsedText)
-                If Err.number = 0 Then
+                If Err.Number = 0 Then
                     On Error GoTo 0
                     parsedText = processedParsedText
                 Else
@@ -460,17 +460,26 @@ Function fCLng(ByVal Value As Variant) As Long
 
     On Error Resume Next
     fCLng = CLng(Value)
-    If Err.number = 13 Then
+    If Err.Number = 13 Then
         Err.Clear
         fCLng = CLng(Replace(Value, ".", ","))
-        If Err.number <> 0 Then Err.Raise vbObjectError + 100, , "fCLng: wrong value with error " & Err.number & ": " & Err.Description
+        If Err.Number <> 0 Then Err.Raise vbObjectError + 100, , "fCLng: wrong value with error " & Err.Number & ": " & Err.Description
     End If
     
 End Function
 '_________________________________________________________________________________________________________________________________________________________________
 
-Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
-                Optional ByVal reversed As Boolean = False)
+Function Conv(ByVal Number As Long, ParamArray DimensionSettings() As Variant) As Variant
+    Conv = Conversion(DimensionSettings, Number, False)
+End Function
+
+Function ConvRev(ByVal Number As Long, ParamArray DimensionSettings() As Variant) As Variant
+    ConvRev = Conversion(DimensionSettings, Number, True)
+End Function
+
+
+Function Conversion(ByVal InputArray As Variant, ByVal Number As Long, _
+                Optional ByVal reversed As Boolean = False) As Variant
 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' Function accepts an InputArray that represents settings for the conversion and converts
@@ -520,6 +529,7 @@ Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
     Dim bounds() As Variant, _
         stt() As Variant
     Dim NumDims As Integer, _
+        NumDims0 As Integer, _
         Ndx As Integer, _
         bottom As Long, _
         i As Long
@@ -530,9 +540,16 @@ Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
     ' If the number of dimensions is not 1 or 2
     ' raise an error
     '''''''''''''''''''''''''''''''''''''''''''
+    
     NumDims = NumberOfArrayDimensions(InputArray)
     If NumDims = 0 Or NumDims > 2 Then GoTo WrongDimensions
-    
+    If NumDims = 1 Then
+        NumDims0 = NumberOfArrayDimensions(InputArray(LBound(InputArray)))
+        If NumDims0 = 2 Then
+            InputArray = InputArray(LBound(InputArray))
+            NumDims = NumDims0
+        End If
+    End If
     ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     ' Prepare an array for the calculation.
     ' Process different types of input arrays (1, 2 or 3 in the description)
@@ -544,7 +561,7 @@ Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
         ''''''''''''''''''''''''''''''''''''''''''''''
         On Error Resume Next
             bounds = InputArray
-            If Err.number = 13 Then
+            If Err.Number = 13 Then
                 ReDim bounds(LBound(InputArray, 1) To UBound(InputArray), 0 To 1) As Variant
                 bottom = LBound(InputArray, 2)
                 For i = LBound(InputArray, 1) To UBound(InputArray, 1)
@@ -593,18 +610,18 @@ Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
     For i = stt(0) To stt(1) Step stt(2)
         bottom = LBound(bounds, 2)
         If Not solved Then
-            Result(i) = bounds(i, bottom) + (number Mod (bounds(i, bottom + 1) - bounds(i, bottom) + 1))
-            number = WorksheetFunction.Quotient(number, bounds(i, bottom + 1) - bounds(i, bottom) + 1)
+            Result(i) = bounds(i, bottom) + (Number Mod (bounds(i, bottom + 1) - bounds(i, bottom) + 1))
+            Number = WorksheetFunction.Quotient(Number, bounds(i, bottom + 1) - bounds(i, bottom) + 1)
         Else
             Result(i) = bounds(i, bottom) + 0
         End If
-        If number = 0 Then
+        If Number = 0 Then
             solved = True
         End If
     Next i
     If Not solved Then Err.Raise vbObjectError + 101, , "fConvert2: unsolved. Number is greater than the settings allow."
     
-    fConv = Result
+    Conversion = Result
     Exit Function
 WrongDimensions:
     Err.Raise vbObjectError - 1, , "fConvert2: wrong dimensions of the input array."
@@ -613,8 +630,10 @@ End Function
 
 '_________________________________________________________________________________________________________________________________________________________________
 
-Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0, _
-                Optional ByVal LineBreaks = False, Optional ByVal ShowArrayIndexes As Boolean = False)
+Function DUMP(ByVal Variable As Variant, _
+                Optional ByVal LineBreaks As Boolean = False, _
+                Optional ByVal ShowArrayIndexes As Boolean = False, _
+                Optional ByVal Deepness As Integer = 0)
     
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' DUMP
@@ -630,14 +649,14 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
 '                         if dictionary in curly brackets {}, other primitives are converted
 '                         into string with CStr function, if it is something other, TypeName is
 '                         shown.
-' * Deepness as integer - a level of recursion. It will indent the items correctly. This doesn't
-'                         need to be used. It is used automatically in case of recursion.
 ' * LineBreaks - if true, line breaks are added after individual items.
 ' * ShowArrayIndexes - if true, array item indexes will be shown to better orientate easier.
+' * Deepness as Integer - a level of recursion. It will indent the items correctly. This doesn't
+'                         need to be used. It is used automatically in case of recursion.
 '
 ' Requirements:
 '       - NumberOfArrayDimensions function
-'       - fConv function
+'       - Conversion function
 '
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
@@ -732,7 +751,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ' Values in an array with unknown number
             ' of dimesions will be copied to a helper
             ' collection with an index as a key. Index
-            ' is calculated with an fConv function to
+            ' is calculated with an Conversion function to
             ' which bounds of dimensions is passed.
             ''''''''''''''''''''''''''''''''''''''''''
             
@@ -759,13 +778,13 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
             ' Transfer each value in the array to a helper
             ' collection with item's index as its key.
-            ' The index is calculated with fConv function in a form
+            ' The index is calculated with Conversion function in a form
             ' of dimension indexes joined with a dash like e.g.:
             ' "2-4-6-1"
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
             itemIndex = 0
             For Each v In Variable
-                keyVals.Add v, Join(fConv(InputArray:=dimsDef, number:=itemIndex, reversed:=True), "-")
+                keyVals.Add v, Join(Conversion(InputArray:=dimsDef, Number:=itemIndex, reversed:=True), "-")
                 itemIndex = itemIndex + 1
             Next v
             
@@ -774,7 +793,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ' keys in a correct order and build a string output.
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
             For i = 0 To itemIndex - 1
-                coordinates = fConv(dimsDef, i) ' Calculate coordinates for the current item.
+                coordinates = Conversion(dimsDef, i) ' Calculate coordinates for the current item.
                 
                 ''''''''''''''''''''''''''''''''''''''''''
                 ' Determine if a bracket has to be opened.
@@ -854,7 +873,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
                 '''''''''''''''''''''''''''''''''''''''''''''''''''
                 output = output & _
                          indexes & _
-                         DUMP(keyVals(Join(coordinates, "-")), Deepness, LineBreaks, ShowArrayIndexes) & _
+                         DUMP(keyVals(Join(coordinates, "-")), LineBreaks, ShowArrayIndexes, Deepness) & _
                          itemSeparator
                 
                 
@@ -888,7 +907,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
                         ''''''''''''''''''''''''''''''''''''''''''''''''''
                         ' Remove item separator before closing the bracket
                         ''''''''''''''''''''''''''''''''''''''''''''''''''
-                        If Right(output, 2) = itemSeparator Then output = Left(output, Len(output) - 2)
+                        If Right(output, Len(itemSeparator)) = itemSeparator Then output = Left(output, Len(output) - Len(itemSeparator))
                         
                         ''''''''''''''''''''''''''''''''''''''''''''''''''''''
                         ' Reduce indentation before closing a bracket exept
@@ -902,7 +921,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
                         '''''''''''''''''''
                         ' Close the bracket
                         '''''''''''''''''''
-                        output = output & ")" & Application.Trim(itemSeparator)
+                        output = output & ")" & itemSeparator
                     End If
                 Next leadingDimensionIndex
             Next i
@@ -910,7 +929,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ''''''''''''''''''''''''''''''''''''''''''
             ' Remove item separator after last bracket
             ''''''''''''''''''''''''''''''''''''''''''
-            If Right(output, Len(Application.Trim(itemSeparator))) = Application.Trim(itemSeparator) Then output = Left(output, Len(output) - Len(Application.Trim(itemSeparator)))
+            If Right(output, Len(itemSeparator)) = itemSeparator Then output = Left(output, Len(output) - Len(itemSeparator))
             
             '''''''''''''''''''''''''''''''''''''''''''
             ' If there are no dimensions, return info
@@ -965,7 +984,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ' Recursively call the DUMP function for the value with
             ' an increased indentation level
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
-            CurrentValue = DUMP(CurrentValue, Deepness + 1, LineBreaks, ShowArrayIndexes)
+            CurrentValue = DUMP(CurrentValue, LineBreaks, ShowArrayIndexes, Deepness + 1)
             
             ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
             ' Add key: value pair string to the output string and add an
@@ -1020,7 +1039,7 @@ Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0,
             ' collection and add a line break if enabled.
             '''''''''''''''''''''''''''''''''''''''''''''
             For Each itm In Variable
-                output = output & DUMP(itm, Deepness, LineBreaks, ShowArrayIndexes) & itemSeparator
+                output = output & DUMP(itm, LineBreaks, ShowArrayIndexes, Deepness) & itemSeparator
                 If LineBreaks Then output = output & vbNewLine & WorksheetFunction.Rept(indentation, Deepness)
             Next itm
             
