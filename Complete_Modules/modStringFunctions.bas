@@ -5,6 +5,17 @@ Option Compare Text
 
 '_________________________________________________________________________________________________________________________________________________________________
 
+Function SEPAR(ByVal CommaSeparatedText As String, _
+               Optional ByVal ColumnDelimiter As String = ";", _
+               Optional ByVal RowDelimiter As String = vbCrLf, _
+               Optional ByVal TextSpecifier As String = """", _
+               Optional ByVal FunctionEvaluateStatement As String = "", _
+               Optional ByVal ValuePlaceholderForFunction As String = "{value}", _
+               Optional ByVal OutputFormat As Integer = 1001, _
+               Optional ByVal HeaderRowNumber As Long = 1, _
+               Optional ByVal ColumnNumberForRowKey As Long = 0, _
+               Optional ByVal ForceEventsCompletion As Boolean = False) As Variant
+               
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' Function: SEPAR
 ' Function separates text separated by specified delimiter to the specified output format.
@@ -62,17 +73,6 @@ Option Compare Text
 '                                        stop/pause the script and prevent an "not
 '                                        responding" problem.
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-Function SEPAR(ByVal CommaSeparatedText As String, _
-               Optional ByVal ColumnDelimiter As String = ";", _
-               Optional ByVal RowDelimiter As String = vbCrLf, _
-               Optional ByVal TextSpecifier As String = """", _
-               Optional ByVal FunctionEvaluateStatement As String = "", _
-               Optional ByVal ValuePlaceholderForFunction As String = "{value}", _
-               Optional ByVal OutputFormat As Integer = 1001, _
-               Optional ByVal HeaderRowNumber As Long = 1, _
-               Optional ByVal ColumnNumberForRowKey As Long = 0, _
-               Optional ByVal ForceEventsCompletion As Boolean = False) As Variant
                
     Dim _
         rowCll As New Collection, _
@@ -469,6 +469,9 @@ Function fCLng(ByVal Value As Variant) As Long
 End Function
 '_________________________________________________________________________________________________________________________________________________________________
 
+Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
+                Optional ByVal reversed As Boolean = False)
+
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' Function accepts an InputArray that represents settings for the conversion and converts
 ' the number input accordingly. Basicaly it is the same type of conversion like DEC2BIN or
@@ -513,9 +516,6 @@ End Function
 '   - fCLng
 '
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-Function fConv(ByVal InputArray As Variant, ByVal number As Long, _
-                Optional ByVal reversed As Boolean = False)
 
     Dim bounds() As Variant, _
         stt() As Variant
@@ -613,6 +613,9 @@ End Function
 
 '_________________________________________________________________________________________________________________________________________________________________
 
+Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0, _
+                Optional ByVal LineBreaks = False, Optional ByVal ShowArrayIndexes As Boolean = False)
+    
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' DUMP
 ' Function serializes (dumps) a variable into a string output. It started with a need to see
@@ -637,9 +640,6 @@ End Function
 '       - fConv function
 '
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-Function DUMP(ByVal Variable As Variant, Optional ByVal Deepness As Integer = 0, _
-                Optional ByVal LineBreaks = False, Optional ByVal ShowArrayIndexes As Boolean = False)
     
     Dim objects As New Collection
     Dim coordinates() As Variant, _
