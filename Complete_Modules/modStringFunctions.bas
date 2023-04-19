@@ -1,3 +1,5 @@
+Attribute VB_Name = "modStringFunctions"
+
 Option Explicit
 Option Compare Text
 
@@ -471,7 +473,7 @@ End Function
 Function Conv(ByVal Number As Long, ParamArray DimensionSettings() As Variant) As Variant
 
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' Wrapper function for Conversion function. Makes use of parameter array so the
+' Wrapper function for Convert function. Makes use of parameter array so the
 ' input of settings is easier.
 '
 ' Parameters:
@@ -481,15 +483,15 @@ Function Conv(ByVal Number As Long, ParamArray DimensionSettings() As Variant) A
 '                           array.
 '
 ' Dependancies:
-'     * Conversion
+'     * Convert
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    Conv = Conversion(DimensionSettings, Number, False)
+    Conv = Convert(DimensionSettings, Number, False)
 End Function
 
 Function ConvRev(ByVal Number As Long, ParamArray DimensionSettings() As Variant) As Variant
     
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' Wrapper function for Conversion function but in a reversed order. Makes use of
+' Wrapper function for Convert function but in a reversed order. Makes use of
 ' parameter array so the input of settings is easier.
 '
 ' Parameters:
@@ -499,14 +501,14 @@ Function ConvRev(ByVal Number As Long, ParamArray DimensionSettings() As Variant
 '                           array.
 '
 ' Dependancies:
-'     * Conversion
+'     * Convert
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    ConvRev = Conversion(DimensionSettings, Number, True)
+    ConvRev = Convert(DimensionSettings, Number, True)
 End Function
 
 
-Function Conversion(ByVal InputArray As Variant, ByVal Number As Long, _
-                Optional ByVal reversed As Boolean = False) As Variant
+Function Convert(ByVal InputArray As Variant, ByVal Number As Long, _
+                Optional ByVal Reversed As Boolean = False) As Variant
 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' Function accepts an InputArray that represents settings for the conversion and converts
@@ -548,7 +550,7 @@ Function Conversion(ByVal InputArray As Variant, ByVal Number As Long, _
 '                           1: 1,0,0
 '                           2: 2,0,0
 '
-' Requirements:
+' Dependancies:
 '   - fCLng
 '
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -624,7 +626,7 @@ Function Conversion(ByVal InputArray As Variant, ByVal Number As Long, _
     ' Setting the mode of the calculation:
     ' normal or reversed
     ''''''''''''''''''''''''''''''''''''''
-    If reversed Then
+    If Reversed Then
         stt = Array(LBound(Result), UBound(Result), 1)
     Else
         stt = Array(UBound(Result), LBound(Result), -1)
@@ -648,7 +650,7 @@ Function Conversion(ByVal InputArray As Variant, ByVal Number As Long, _
     Next i
     If Not solved Then Err.Raise vbObjectError + 101, , "fConvert2: unsolved. Number is greater than the settings allow."
     
-    Conversion = Result
+    Convert = Result
     Exit Function
 WrongDimensions:
     Err.Raise vbObjectError - 1, , "fConvert2: wrong dimensions of the input array."
@@ -683,7 +685,7 @@ Function DUMP(ByVal Variable As Variant, _
 '
 ' Requirements:
 '       - NumberOfArrayDimensions function
-'       - Conversion function
+'       - Convert function
 '
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
@@ -692,9 +694,9 @@ Function DUMP(ByVal Variable As Variant, _
         objectMemberNames As Variant
     Dim output As String, _
         v As Variant, _
-        dimensions As Integer, _
+        Dimensions As Integer, _
         i As Long, _
-        itemIndex As Long, _
+        ItemIndex As Long, _
         dimensionIndex As Long, _
         consecutiveDimensionsIndex As Long, _
         previousDimensions As Long, _
@@ -763,10 +765,10 @@ Function DUMP(ByVal Variable As Variant, _
         ''''''''''''''''''''''''''''''''''''''''''''''
         ' Count array dimensions
         ''''''''''''''''''''''''''''''''''''''''''''''
-        dimensions = NumberOfArrayDimensions(Variable)
+        Dimensions = NumberOfArrayDimensions(Variable)
         
         
-        If dimensions = 0 Then
+        If Dimensions = 0 Then
             ''''''''''''''''''''''''''''''''''''''''''
             ' Zero dimensions means an empty array
             ''''''''''''''''''''''''''''''''''''''''''
@@ -778,7 +780,7 @@ Function DUMP(ByVal Variable As Variant, _
             ' Values in an array with unknown number
             ' of dimesions will be copied to a helper
             ' collection with an index as a key. Index
-            ' is calculated with an Conversion function to
+            ' is calculated with an Convert function to
             ' which bounds of dimensions is passed.
             ''''''''''''''''''''''''''''''''''''''''''
             
@@ -796,8 +798,8 @@ Function DUMP(ByVal Variable As Variant, _
             ' and upper bound of the corresponding dimension
             ' in its second dimension.
             ''''''''''''''''''''''''''''''''''''''''''''''''''
-            ReDim dimsDef(1 To dimensions, 1 To 2) As Integer
-            For i = 1 To dimensions
+            ReDim dimsDef(1 To Dimensions, 1 To 2) As Integer
+            For i = 1 To Dimensions
                 dimsDef(i, 1) = LBound(Variable, i)
                 dimsDef(i, 2) = UBound(Variable, i)
             Next i
@@ -805,22 +807,22 @@ Function DUMP(ByVal Variable As Variant, _
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
             ' Transfer each value in the array to a helper
             ' collection with item's index as its key.
-            ' The index is calculated with Conversion function in a form
+            ' The index is calculated with Convert function in a form
             ' of dimension indexes joined with a dash like e.g.:
             ' "2-4-6-1"
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
-            itemIndex = 0
+            ItemIndex = 0
             For Each v In Variable
-                keyVals.Add v, Join(Conversion(InputArray:=dimsDef, Number:=itemIndex, reversed:=True), "-")
-                itemIndex = itemIndex + 1
+                keyVals.Add v, Join(Convert(InputArray:=dimsDef, Number:=ItemIndex, Reversed:=True), "-")
+                ItemIndex = ItemIndex + 1
             Next v
             
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
             ' Traverse through the helper collection by calling the
             ' keys in a correct order and build a string output.
             '''''''''''''''''''''''''''''''''''''''''''''''''''''''
-            For i = 0 To itemIndex - 1
-                coordinates = Conversion(dimsDef, i) ' Calculate coordinates for the current item.
+            For i = 0 To ItemIndex - 1
+                coordinates = Convert(dimsDef, i) ' Calculate coordinates for the current item.
                 
                 ''''''''''''''''''''''''''''''''''''''''''
                 ' Determine if a bracket has to be opened.
